@@ -1,0 +1,3 @@
+import SDFCore
+
+SortInitializerCommand.main()
