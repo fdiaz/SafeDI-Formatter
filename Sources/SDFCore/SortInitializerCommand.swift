@@ -1,6 +1,7 @@
 import ArgumentParser
 import Foundation
 
+@main
 public struct SortInitializerCommand: AsyncParsableCommand {
   public init() {}
   
@@ -19,12 +20,8 @@ public struct SortInitializerCommand: AsyncParsableCommand {
   public mutating func run() async throws {
     let swiftFiles = FileManager.default.swiftFiles(at: path)
     
-    guard FileManager.default.fileExists(atPath: path.path) else {
-      throw ValidationError("No file found at \(path.path)")
-    }
-    
     guard !swiftFiles.isEmpty else {
-      throw ValidationError("No .swift files found at \(path.path)")
+      throw CleanExit.message("No .swift files found at \(path.path). Exiting.")
     }
     
     for file in swiftFiles {

@@ -14,7 +14,7 @@ let package = Package(
     .visionOS(.v1),
   ],
   products: [
-    .executable(name: "safedi-formatter", targets: ["SafeDI-Formatter"]),
+    .executable(name: "safedi-formatter", targets: ["SDFCore"]),
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
@@ -22,10 +22,6 @@ let package = Package(
   ],
   targets: [
     .executableTarget(
-      name: "SafeDI-Formatter",
-      dependencies: ["SDFCore"]
-    ),
-    .target(
       name: "SDFCore",
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser"),
