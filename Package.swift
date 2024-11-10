@@ -30,6 +30,10 @@ let package = Package(
       ],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
-    .testTarget(name: "SDFCoreTests", dependencies: ["SDFCore"])
+    .testTarget(
+      name: "SDFCoreTests",
+      dependencies: ["SDFCore"],
+      swiftSettings: [.swiftLanguageMode(.v6)]
+    )
   ]
 )
