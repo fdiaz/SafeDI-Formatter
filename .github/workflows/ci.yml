@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+
+jobs:
+  spm:
+    name: Build and Test on Xcode 16
+    runs-on: macos-14
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Select Xcode Version
+        run: sudo xcode-select --switch /Applications/Xcode_16.app/Contents/Developer
+      - name: Build and Test Framework
+        run: |
+          xcrun swift test -c release --enable-code-coverage -Xswiftc -enable-testing
+
+  linux:
+    name: Build and Test on Linux
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Build and Test Framework
+        run: swift test -c release --enable-code-coverage -Xswiftc -enable-testing
+
+  readme-validation:
+    name: Check Markdown links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Validate Markdown
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
