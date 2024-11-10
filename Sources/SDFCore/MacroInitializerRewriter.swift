@@ -3,7 +3,7 @@ import SwiftSyntax
 /// Filters the nodes to visit. It only visits structures that have the provided macro, ignores all others.
 final class MacroFilteringRewriter: SyntaxRewriter {
   private let rewriter: MacroInitializerRewriter
-  
+
   init(macroName: String) {
     self.rewriter = MacroInitializerRewriter(macroName: macroName)
   }
@@ -12,15 +12,13 @@ final class MacroFilteringRewriter: SyntaxRewriter {
     guard node.attributes.hasMacroNamed(rewriter.macroName) else {
       return super.visit(node)
     }
-  
     return rewriter.visit(node)
   }
-  
+
   override func visit(_ node: ActorDeclSyntax) -> DeclSyntax {
     guard node.attributes.hasMacroNamed(rewriter.macroName) else {
       return super.visit(node)
     }
-    
     return rewriter.visit(node)
   }
   
@@ -28,7 +26,6 @@ final class MacroFilteringRewriter: SyntaxRewriter {
     guard node.attributes.hasMacroNamed(rewriter.macroName) else {
       return super.visit(node)
     }
-    
     return rewriter.visit(node)
   }
 }
@@ -54,12 +51,16 @@ fileprivate extension AttributeListSyntax {
 /// Sorts the initializers
 fileprivate final class MacroInitializerRewriter: SyntaxRewriter {
   fileprivate let macroName: String
-  
+  private var typeDeclsEncountered = 0
+
   init(macroName: String) {
     self.macroName = macroName
   }
   
   override func visit(_ node: InitializerDeclSyntax) -> DeclSyntax {
+    guard typeDeclsEncountered == 1 else {
+      return super.visit(node)
+    }
     typealias OrderedTrivia = (leadingTrivia: Trivia, trailingComma: TokenSyntax?)
     let originalParameterMetatada: [OrderedTrivia] = node.signature.parameterClause.parameters.map { ($0.leadingTrivia, $0.trailingComma) }
     
@@ -79,5 +80,27 @@ fileprivate final class MacroInitializerRewriter: SyntaxRewriter {
     
     let initializerNode = node.with(\.signature, signatureNode)
     return DeclSyntax(initializerNode)
+  }
+
+  override func visit(_ node: StructDeclSyntax) -> DeclSyntax {
+    typeDeclsEncountered += 1
+    return super.visit(node)
+  }
+
+  override func visit(_ node: ActorDeclSyntax) -> DeclSyntax {
+    typeDeclsEncountered += 1
+    return super.visit(node)
+  }
+
+  override func visit(_ node: ClassDeclSyntax) -> DeclSyntax {
+    typeDeclsEncountered += 1
+    return super.visit(node)
+  }
+
+  override func visitPost(_ node: Syntax) {
+    if StructDeclSyntax(node) != nil || ActorDeclSyntax(node) != nil || ClassDeclSyntax(node) != nil {
+      typeDeclsEncountered -= 1
+    }
+    super.visitPost(node)
   }
 }
