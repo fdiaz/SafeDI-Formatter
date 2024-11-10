@@ -46,8 +46,8 @@ final class MacroInitializerSorterTests {
     arguments: TestData.WithNestedDefinitions.allCases)
   func run_doesNotSortNested(content: TestData.WithNestedDefinitions) async throws {
     let expected = """
-        init(b: String,
-             a: Int) {}
+        init(d: String,
+             c: Int) {}
     """
     try await #expect(sut.run(onContent: content.rawValue).contains(expected))
   }
@@ -122,8 +122,8 @@ struct TestData {
     @TestMacro
     actor Outer {
       actor Some {
-        init(b: String,
-             a: Int) {}
+        init(d: String,
+             c: Int) {}
       }
       init(b: String, 
            a: Int) {}
@@ -133,8 +133,8 @@ struct TestData {
     @TestMacro
     class Outer {
       class Some {
-        init(b: String,
-             a: Int) {}
+        init(d: String,
+             c: Int) {}
       }
       init(b: String, 
            a: Int) {}
@@ -144,8 +144,8 @@ struct TestData {
     @TestMacro
     struct Outer {
       struct Some {
-        init(b: String,
-             a: Int) {}
+        init(d: String,
+             c: Int) {}
       }
       init(b: String, 
            a: Int) {}
