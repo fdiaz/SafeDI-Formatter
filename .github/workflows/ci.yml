@@ -17,7 +17,7 @@ jobs:
         run: sudo xcode-select --switch /Applications/Xcode_16.app/Contents/Developer
       - name: Build and Test Framework
         run: |
-          xcrun swift test -c release --enable-code-coverage -Xswiftc -enable-testing
+          xcrun swift test --enable-code-coverage -Xswiftc -enable-testing
 
   linux:
     name: Build and Test on Linux
