@@ -20,7 +20,7 @@ final class MacroInitializerSorterTests {
   }
 
   @Test(
-    "With an type that uses the macro and has a multi line initializer. It sorts the init parameters",
+    "With a type that uses the macro and has a multi line initializer. It sorts the init parameters",
     arguments: TestData.WithMacroMultiline.allCases)
   func run_doesSortMultiLine(content: TestData.WithMacroMultiline) async throws {
     let expected = """
@@ -31,7 +31,7 @@ final class MacroInitializerSorterTests {
   }
 
   @Test(
-    "With an type that uses the macro that defines a nested type with an unsorted initializer. It sorts the outer init parameters",
+    "With a type that uses the macro that defines a nested type with an unsorted initializer. It sorts the outer init parameters",
     arguments: TestData.WithNestedDefinitions.allCases)
   func run_doesSortOuterWhenNestedPresent(content: TestData.WithNestedDefinitions) async throws {
     let expected = """
@@ -42,13 +42,29 @@ final class MacroInitializerSorterTests {
   }
 
   @Test(
-    "With an type that uses the macro that defines a nested type with an unsorted initializer. It does not sort the nested init parameters",
+    "With a type that uses the macro that defines a nested type with an unsorted initializer. It does not sort the nested init parameters",
     arguments: TestData.WithNestedDefinitions.allCases)
   func run_doesNotSortNested(content: TestData.WithNestedDefinitions) async throws {
     let expected = """
         init(d: String,
              c: Int) {}
     """
+    try await #expect(sut.run(onContent: content.rawValue).contains(expected))
+  }
+  
+  @Test(
+    "With a type that uses the macro inside of another type. It sorts the inner init parameters",
+    arguments: TestData.WithNestedDefinitionMacroInside.allCases)
+  func run_doesSortInnerWhenNested(content: TestData.WithNestedDefinitionMacroInside) async throws {
+    let expected = "    init(c: Int, d: String) {}"
+    try await #expect(sut.run(onContent: content.rawValue).contains(expected))
+  }
+  
+  @Test(
+    "With a type that uses the macro inside of another type. It does not sort the outer init parameters",
+    arguments: TestData.WithNestedDefinitionMacroInside.allCases)
+  func run_doesNotSortOuterNested(content: TestData.WithNestedDefinitionMacroInside) async throws {
+    let expected = "  init(b: String, a: Int) {}"
     try await #expect(sut.run(onContent: content.rawValue).contains(expected))
   }
 }
@@ -149,6 +165,36 @@ struct TestData {
       }
       init(b: String, 
            a: Int) {}
+    }
+    """
+  }
+  
+  enum WithNestedDefinitionMacroInside: String, CaseIterable {
+    case actorContent = """
+    actor Outer {
+      @TestMacro
+      actor Inner {
+        init(d: String, c: Int) {}
+      }
+      init(b: String, a: Int) {}
+    }
+    """
+    case classContent = """
+    class Outer {
+      @TestMacro
+      class Inner {
+        init(d: String, c: Int) {}
+      }
+      init(b: String, a: Int) {}
+    }
+    """
+    case structContent = """
+    struct Outer {
+      @TestMacro
+      struct Inner {
+        init(d: String, c: Int) {}
+      }
+      init(b: String, a: Int) {}
     }
     """
   }
