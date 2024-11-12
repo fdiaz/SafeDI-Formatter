@@ -61,24 +61,8 @@ fileprivate final class MacroInitializerRewriter: SyntaxRewriter {
     guard typeDeclsEncountered == 1 else {
       return super.visit(node)
     }
-    typealias OrderedTrivia = (leadingTrivia: Trivia, trailingComma: TokenSyntax?)
-    let originalParameterMetatada: [OrderedTrivia] = node.signature.parameterClause.parameters.map { ($0.leadingTrivia, $0.trailingComma) }
     
-    let sortedParameters = node.signature.parameterClause.parameters.sorted {
-      $0.firstName.text < $1.firstName.text
-    }.enumerated().map { index, element in
-      let original = originalParameterMetatada[index]
-      return element
-        .with(\.leadingTrivia, original.leadingTrivia)
-        .with(\.trailingComma, original.trailingComma)
-    }
-    
-    // Rewrite the nodes
-    let functionParameterListNode = FunctionParameterListSyntax(sortedParameters)
-    let parameterClauseNode = node.signature.parameterClause.with(\.parameters, functionParameterListNode)
-    let signatureNode = node.signature.with(\.parameterClause, parameterClauseNode)
-    
-    let initializerNode = node.with(\.signature, signatureNode)
+    let initializerNode = sortParameters(node)
     return DeclSyntax(initializerNode)
   }
 
@@ -102,5 +86,26 @@ fileprivate final class MacroInitializerRewriter: SyntaxRewriter {
       typeDeclsEncountered -= 1
     }
     super.visitPost(node)
+  }
+  
+  private func sortParameters(_ node: InitializerDeclSyntax) -> InitializerDeclSyntax{
+    typealias OrderedTrivia = (leadingTrivia: Trivia, trailingComma: TokenSyntax?)
+    let originalParameterMetatada: [OrderedTrivia] = node.signature.parameterClause.parameters.map { ($0.leadingTrivia, $0.trailingComma) }
+    
+    let sortedParameters = node.signature.parameterClause.parameters.sorted {
+      $0.firstName.text < $1.firstName.text
+    }.enumerated().map { index, element in
+      let original = originalParameterMetatada[index]
+      return element
+        .with(\.leadingTrivia, original.leadingTrivia)
+        .with(\.trailingComma, original.trailingComma)
+    }
+    
+    // Rewrite the nodes
+    let functionParameterListNode = FunctionParameterListSyntax(sortedParameters)
+    let parameterClauseNode = node.signature.parameterClause.with(\.parameters, functionParameterListNode)
+    let signatureNode = node.signature.with(\.parameterClause, parameterClauseNode)
+    
+    return node.with(\.signature, signatureNode)
   }
 }
