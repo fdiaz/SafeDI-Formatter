@@ -3,10 +3,10 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftParser
 
-struct MacroInitializerSorter {
-  let macroName: String
+public struct MacroInitializerSorter {
+  private let macroName: String
   
-  init(macroName: String) {
+  public init(macroName: String) {
     self.macroName = macroName
   }
   
@@ -15,7 +15,7 @@ struct MacroInitializerSorter {
   /// - Parameter fileURL: The path to the Swift file
   /// - Returns: A source accurate description of the Swift file at the fileURL
   @discardableResult
-  func run(on fileURL: URL) async throws -> String {
+  public func run(on fileURL: URL) async throws -> String {
     // TODO: Potentially optimize performance by discarding Swift files that do not use the macro.
     
     let original = try String(contentsOfFile: fileURL.path, encoding: .utf8)

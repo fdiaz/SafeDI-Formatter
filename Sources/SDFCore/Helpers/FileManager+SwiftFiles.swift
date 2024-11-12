@@ -7,7 +7,7 @@ extension FileManager {
   ///
   /// - Parameter baseURL: The URL to look for Swift files. It can either be a file or a directory
   /// - Returns: All the files with a .swift extension at the given URL or an empty array if none exist
-  func swiftFiles(at baseURL: URL) -> [URL] {
+  public func swiftFiles(at baseURL: URL) -> [URL] {
     guard baseURL.hasDirectoryPath else {
       return baseURL.pathExtension == "swift" ? [baseURL] : []
     }
@@ -36,7 +36,7 @@ extension FileManager {
   ///
   /// - Parameter baseURL: The URL to look for a Swift file
   /// - Returns: `true` if the URL contains a Swift file, `false` otherwise
-  func isSwiftFile(at baseURL: URL) -> Bool {
+  public func isSwiftFile(at baseURL: URL) -> Bool {
     FileManager.default.fileExists(atPath: baseURL.path) && !baseURL.hasDirectoryPath && baseURL.pathExtension == "swift"
   }
 }
