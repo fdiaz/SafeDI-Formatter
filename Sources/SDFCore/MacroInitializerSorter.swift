@@ -1,6 +1,5 @@
 import Foundation
 import SwiftSyntax
-import SwiftSyntaxBuilder
 import SwiftParser
 
 public struct MacroInitializerSorter {
