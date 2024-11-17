@@ -14,13 +14,13 @@ extension FileManager {
 
     var swiftFiles: [URL] = []
 
-    guard let enumerator = self.enumerator(
-      at: baseURL,
-      includingPropertiesForKeys: nil,
-      options: [.skipsHiddenFiles])
-      else
-    {
-      return  []
+    guard
+      let enumerator = self.enumerator(
+        at: baseURL,
+        includingPropertiesForKeys: nil,
+        options: [.skipsHiddenFiles])
+    else {
+      return []
     }
 
     for case let fileURL as URL in enumerator {
@@ -37,6 +37,7 @@ extension FileManager {
   /// - Parameter baseURL: The URL to look for a Swift file
   /// - Returns: `true` if the URL contains a Swift file, `false` otherwise
   public func isSwiftFile(at baseURL: URL) -> Bool {
-    FileManager.default.fileExists(atPath: baseURL.path) && !baseURL.hasDirectoryPath && baseURL.pathExtension == "swift"
+    FileManager.default.fileExists(atPath: baseURL.path) && !baseURL.hasDirectoryPath
+      && baseURL.pathExtension == "swift"
   }
 }

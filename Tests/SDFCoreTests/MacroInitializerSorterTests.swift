@@ -105,11 +105,12 @@ final class MacroInitializerSorterTests {
             self.a = a
             self.b = b
         """
-      #expect(try await sut.run(onContent: content).contains(expected))
+      let real = try await sut.run(onContent: content)
+      #expect(real.contains(expected))
     }
 
     @Test(
-      "With self assignments and other values in the intitializer. It sorts them with all the self assignments on top",
+      "With self assignments and other values in the intitializer. It does not sort non-self values.",
       arguments: TestData.types
     )
     func run_sortsAssignmentsWithOther(type: String) async throws {
@@ -123,14 +124,15 @@ final class MacroInitializerSorterTests {
         }
         """
       let expected = """
-            self.a = a
             b = Type()
+            self.a = a
         """
-      #expect(try await sut.run(onContent: content).contains(expected))
+      let real = try await sut.run(onContent: content)
+      #expect(real.contains(expected))
     }
 
     @Test(
-      "With self assignments and block statements in the intitializer. It sorts them with all the self assignments on top",
+      "With self assignments and block statements in the intitializer. It does not sort non-self values",
       arguments: TestData.types
     )
     func run_sortsAssignmentsWithBlockStatements(type: String) async throws {
@@ -146,12 +148,105 @@ final class MacroInitializerSorterTests {
         }
         """
       let expected = """
-            self.a = a
             b = Type { some in
               some.doSomething()
             }
+            self.a = a
         """
-      #expect(try await sut.run(onContent: content).contains(expected))
+
+      let real = try await sut.run(onContent: content)
+      #expect(real.contains(expected))
+    }
+
+    @Test(
+      "With self assignments and block statements in the intitializer, on different sides of a super.init call. It sorts calls on either side of the super.init call without mixing them",
+      arguments: TestData.types
+    )
+    func run_sortsAssignments_keepsSuperInit(type: String) async throws {
+      let content = """
+        @TestMacro
+        \(type) Some {
+          init(a: Int) {
+            c = Type { some in
+              some.doSomething()
+            }
+            self.b = b
+            let a = "test"
+            super.init()
+            self.d = d
+            self.a = a
+          }
+        }
+        """
+      let expected = """
+            c = Type { some in
+              some.doSomething()
+            }
+            self.b = b
+            let a = "test"
+            super.init()
+            self.a = a
+            self.d = d
+        """
+
+      let real = try await sut.run(onContent: content)
+      #expect(real.contains(expected))
+    }
+
+    @Test(
+      "With self assignments and super init. It only sort the contiguous self assignments.",
+      arguments: TestData.types
+    )
+    func run_sortsAssignments_keepsSuperInit_onlySortsSelf(type: String) async throws {
+      let content = """
+        @TestMacro
+        \(type) Some {
+          init(b: Int, c: Int) {
+            super.init()
+            self.c = c
+            self.b = b
+            a = Self.createValue(from: self.b)
+          }
+        }
+        """
+      let expected = """
+            super.init()
+            self.b = b
+            self.c = c
+            a = Self.createValue(from: self.b)
+        """
+
+      let real = try await sut.run(onContent: content)
+      #expect(real.contains(expected))
+    }
+
+    @Test(
+      "With self assignments and other assignment. It only sort the contiguous self assignments.",
+      arguments: TestData.types
+    )
+    func run_sortsAssignments_keepsNonSelfAssignment_onlySortsSelf(type: String) async throws {
+      let content = """
+        @TestMacro
+        \(type) Some {
+          init(b: Int, c: Int, d: Int, e: Int) {
+            self.c = c
+            self.b = b
+            a = A()
+            self.e = e
+            self.d = d
+          }
+        }
+        """
+      let expected = """
+            self.b = b
+            self.c = c
+            a = A()
+            self.d = d
+            self.e = e
+        """
+
+      let real = try await sut.run(onContent: content)
+      #expect(real.contains(expected))
     }
   }
 }

@@ -1,6 +1,10 @@
 import SwiftOperators
 import SwiftSyntax
 
+private typealias Assignment = (
+  leftOperand: String, item: CodeBlockItemSyntax, group: AssignmentGroupType
+)
+
 /// Filters the nodes to visit. It only visits structures that have the provided macro, ignores all others.
 final class MacroFilteringRewriter: SyntaxRewriter {
   private let rewriter: MacroInitializerRewriter
@@ -128,9 +132,7 @@ private final class MacroInitializerRewriter: SyntaxRewriter {
   }
 
   private func sortBodyAssignment(_ body: CodeBlockSyntax) -> CodeBlockSyntax {
-    typealias Assignment = (leftOperand: String, item: CodeBlockItemSyntax)
-    var assignments: [Assignment] = []
-    var otherStatements: [CodeBlockItemSyntax] = []
+    var groupedAssignments = GroupedAssignments()
 
     // We need to fold the operators to get better information about the SequenceExpr node.  https://github.com/swiftlang/swift-syntax/blob/df28b99b5942bcf78b337bd15eafd8c80508d258/Sources/SwiftOperators/SwiftOperators.docc/SwiftOperators.md#quickstart
     let opPrecedence = OperatorTable.standardOperators
@@ -142,20 +144,64 @@ private final class MacroInitializerRewriter: SyntaxRewriter {
         let infixOperand = InfixOperatorExprSyntax(foldedNode),
         infixOperand.leftOperand.trimmed.description.starts(with: "self.")
       {
-        assignments.append(
-          Assignment(infixOperand.leftOperand.description, statement))
+        let assignment = Assignment(
+          leftOperand: infixOperand.leftOperand.description,
+          item: statement,
+          group: .selfAssignments)
+        groupedAssignments.insert(assignment)
       } else {
-        otherStatements.append(statement)
+        let assignment = Assignment(
+          leftOperand: "",
+          item: statement,
+          group: .otherAssignments)
+        groupedAssignments.insert(assignment)
       }
     }
 
-    let sortedStatements: [CodeBlockItemSyntax] =
-      assignments
-      .sorted { $0.leftOperand < $1.leftOperand }
-      .map { $0.item }
+    let codeBlockItemSyntaxArray = groupedAssignments.toCodeBlockSyntasItemArray()
 
-    let codeBlockListSyntax = CodeBlockItemListSyntax(
-      sortedStatements + otherStatements)
+    let codeBlockListSyntax = CodeBlockItemListSyntax(codeBlockItemSyntaxArray)
     return body.with(\.statements, codeBlockListSyntax)
   }
+}
+
+private struct GroupedAssignments {
+  private var lastInsertedType: AssignmentGroupType = .none
+  private(set) var assignments: [[Assignment]] = []
+
+  mutating func insert(_ assignment: Assignment) {
+    switch lastInsertedType {
+    case .none:
+      assignments.append([assignment])
+    default:
+      let currentArray: [Assignment]
+      if lastInsertedType == assignment.group {
+        currentArray = assignments.removeLast() + [assignment]
+      } else {
+        currentArray = [assignment]
+      }
+
+      assignments.append(currentArray)
+    }
+
+    lastInsertedType = assignment.group
+  }
+
+  func toCodeBlockSyntasItemArray() -> [CodeBlockItemSyntax] {
+    assignments.reduce([]) { partialResult, assignment in
+      guard let group = assignment.first?.group, group == .selfAssignments else {
+        return partialResult + assignment.map(\.item)
+      }
+      return partialResult
+        + assignment
+        .sorted { $0.leftOperand < $1.leftOperand }
+        .map(\.item)
+    }
+  }
+}
+
+private enum AssignmentGroupType: Equatable {
+  case none
+  case selfAssignments
+  case otherAssignments
 }
