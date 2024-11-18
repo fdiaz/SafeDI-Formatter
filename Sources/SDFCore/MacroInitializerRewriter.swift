@@ -138,27 +138,31 @@ private final class MacroInitializerRewriter: SyntaxRewriter {
     let opPrecedence = OperatorTable.standardOperators
 
     for statement in body.statements {
+      
+      let assignment: Assignment
       // Group all statements that start with `self.` in an array
       if let item = SequenceExprSyntax(statement.item),
         let foldedNode = try? opPrecedence.foldSingle(item),
         let infixOperand = InfixOperatorExprSyntax(foldedNode),
-        infixOperand.leftOperand.trimmed.description.starts(with: "self.")
+        let leftOperand = infixOperand.leftOperand.as(MemberAccessExprSyntax.self),
+        let rightOperand = infixOperand.rightOperand.as(DeclReferenceExprSyntax.self),
+        leftOperand.declName.trimmedDescription == rightOperand.trimmedDescription,
+        leftOperand.trimmedDescription.starts(with: "self.")
       {
-        let assignment = Assignment(
-          leftOperand: infixOperand.leftOperand.description,
+        assignment = Assignment(
+          leftOperand: leftOperand.description,
           item: statement,
           group: .selfAssignments)
-        groupedAssignments.insert(assignment)
       } else {
-        let assignment = Assignment(
+        assignment = Assignment(
           leftOperand: "",
           item: statement,
           group: .otherAssignments)
-        groupedAssignments.insert(assignment)
       }
+      groupedAssignments.insert(assignment)
     }
 
-    let codeBlockItemSyntaxArray = groupedAssignments.toCodeBlockSyntasItemArray()
+    let codeBlockItemSyntaxArray = groupedAssignments.toCodeBlockSyntaxItemArray()
 
     let codeBlockListSyntax = CodeBlockItemListSyntax(codeBlockItemSyntaxArray)
     return body.with(\.statements, codeBlockListSyntax)
@@ -187,7 +191,7 @@ private struct GroupedAssignments {
     lastInsertedType = assignment.group
   }
 
-  func toCodeBlockSyntasItemArray() -> [CodeBlockItemSyntax] {
+  func toCodeBlockSyntaxItemArray() -> [CodeBlockItemSyntax] {
     assignments.reduce([]) { partialResult, assignment in
       guard let group = assignment.first?.group, group == .selfAssignments else {
         return partialResult + assignment.map(\.item)

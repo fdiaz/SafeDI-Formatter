@@ -248,6 +248,31 @@ final class MacroInitializerSorterTests {
       let real = try await sut.run(onContent: content)
       #expect(real.contains(expected))
     }
+    
+    @Test(
+      "With self assignments that are not of type self.a = a. It does not sort them.",
+      arguments: TestData.types
+    )
+    func run_sortsAssignments_withOtherSelfAssignments_itDoesNotSortThem(type: String) async throws {
+      let content = """
+        @TestMacro
+        \(type) Some {
+          init(b: Int, c: Int) {
+            self.c = c
+            self.b = b
+            self.a = Type()
+          }
+        }
+        """
+      let expected = """
+            self.b = b
+            self.c = c
+            self.a = Type()
+        """
+
+      let real = try await sut.run(onContent: content)
+      #expect(real.contains(expected))
+    }
   }
 }
 
