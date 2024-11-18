@@ -14,11 +14,13 @@ let package = Package(
     .visionOS(.v1),
   ],
   products: [
-    .executable(name: "safedi-formatter", targets: ["CLI"]),
+    .executable(name: "safedi-formatter", targets: ["CLI"])
   ],
   dependencies: [
-    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
-    .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "600.0.0"),
+    .package(
+      url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
+    .package(
+      url: "https://github.com/swiftlang/swift-syntax.git", from: "600.0.0"),
   ],
   targets: [
     .executableTarget(
@@ -33,7 +35,7 @@ let package = Package(
       name: "SDFCore",
       dependencies: [
         .product(name: "SwiftSyntax", package: "swift-syntax"),
-        .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+        .product(name: "SwiftOperators", package: "swift-syntax"),
       ],
       swiftSettings: [.swiftLanguageMode(.v6)]
     ),
@@ -41,6 +43,6 @@ let package = Package(
       name: "SDFCoreTests",
       dependencies: ["SDFCore"],
       swiftSettings: [.swiftLanguageMode(.v6)]
-    )
+    ),
   ]
 )
