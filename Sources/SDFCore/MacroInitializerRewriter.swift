@@ -140,7 +140,7 @@ private final class MacroInitializerRewriter: SyntaxRewriter {
     for statement in body.statements {
       
       let assignment: Assignment
-      // Group all statements that start with `self.` in an array
+      // Group statements of the type `self.a = a` - i.e. self assignments where the property name is equal on both sides
       if let item = SequenceExprSyntax(statement.item),
         let foldedNode = try? opPrecedence.foldSingle(item),
         let infixOperand = InfixOperatorExprSyntax(foldedNode),
@@ -180,8 +180,12 @@ private struct GroupedAssignments {
     default:
       let currentArray: [Assignment]
       if lastInsertedType == assignment.group {
+        // Since we're already in the same group, we can grab the last array of the "assignments" property
+        // and simply append a new element to it.
         currentArray = assignments.removeLast() + [assignment]
       } else {
+        // Since the previous inserted element is of a different group type, we need to split it into
+        // its own array for sorting purposes.
         currentArray = [assignment]
       }
 
