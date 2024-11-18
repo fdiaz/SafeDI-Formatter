@@ -1,9 +1,7 @@
 import SwiftOperators
 import SwiftSyntax
 
-private typealias Assignment = (
-  leftOperand: String, item: CodeBlockItemSyntax, group: AssignmentGroupType
-)
+private typealias Assignment = (item: CodeBlockItemSyntax, group: AssignmentGroupType)
 
 /// Filters the nodes to visit. It only visits structures that have the provided macro, ignores all others.
 final class MacroFilteringRewriter: SyntaxRewriter {
@@ -139,7 +137,7 @@ private final class MacroInitializerRewriter: SyntaxRewriter {
 
     for statement in body.statements {
 
-      let assignment: Assignment
+      let group: AssignmentGroupType
       // Group statements of the type `self.a = a` - i.e. self assignments where the property name is equal on both sides
       if let item = SequenceExprSyntax(statement.item),
         let foldedNode = try? opPrecedence.foldSingle(item),
@@ -149,16 +147,13 @@ private final class MacroInitializerRewriter: SyntaxRewriter {
         leftOperand.declName.trimmedDescription == rightOperand.trimmedDescription,
         leftOperand.trimmedDescription.starts(with: "self.")
       {
-        assignment = Assignment(
-          leftOperand: leftOperand.description,
-          item: statement,
-          group: .selfAssignments)
+        group = .selfAssignments
       } else {
-        assignment = Assignment(
-          leftOperand: "",
-          item: statement,
-          group: .otherAssignments)
+        group = .otherAssignments
       }
+      let assignment = Assignment(
+        item: statement,
+        group: group)
       groupedAssignments.insert(assignment)
     }
 
@@ -202,8 +197,8 @@ private struct GroupedAssignments {
       }
       return partialResult
         + assignment
-        .sorted { $0.leftOperand < $1.leftOperand }
         .map(\.item)
+        .sorted { $0.trimmedDescription < $1.trimmedDescription }
     }
   }
 }
