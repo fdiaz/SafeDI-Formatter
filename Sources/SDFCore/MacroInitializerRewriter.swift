@@ -138,7 +138,7 @@ private final class MacroInitializerRewriter: SyntaxRewriter {
     let opPrecedence = OperatorTable.standardOperators
 
     for statement in body.statements {
-      
+
       let assignment: Assignment
       // Group statements of the type `self.a = a` - i.e. self assignments where the property name is equal on both sides
       if let item = SequenceExprSyntax(statement.item),
